@@ -128,6 +128,9 @@ static void send_data(struct sr_dev_inst *sdi,
 		if (logic.length)
 			sr_session_send(sdi, &packet);
 
+		sr_dbg("sample_count:%zu, sent_samples:%d, trigger_pos:%d, trigger_offset:%zu",
+		       sample_count, devc->sent_samples, devc->trigger_pos, trigger_offset);
+
 		/* Send trigger position. */
 		sr_session_send(sdi, &trig);
 
@@ -177,7 +180,7 @@ void LIBUSB_CALL h4032l_data_transfer_callback(struct libusb_transfer *transfer)
 	}
 
 	if (transfer->status != LIBUSB_TRANSFER_COMPLETED)
-		sr_dbg("%s error: %d.", __func__, transfer->status);
+		sr_dbg("%s error: %d.", libusb_error_name(transfer->status), transfer->status);
 
 	/* Cancel pending transfers. */
 	if (transfer->actual_length == 0) {
@@ -195,6 +198,8 @@ void LIBUSB_CALL h4032l_data_transfer_callback(struct libusb_transfer *transfer)
 
 	/* Close data receiving. */
 	if (devc->remaining_samples == 0) {
+		sr_dbg("STATUS_TRANS:%d 0x%08x 0x%08x", num_samples,
+		       buf[num_samples], buf[num_samples-1]);
 		if (buf[num_samples] != H4032L_END_PACKET_MAGIC)
 			sr_err("Mismatch magic number of end poll.");
 
@@ -231,7 +236,7 @@ void LIBUSB_CALL h4032l_usb_callback(struct libusb_transfer *transfer)
 	}
 
 	if (transfer->status != LIBUSB_TRANSFER_COMPLETED)
-		sr_dbg("%s error: %d.", __func__, transfer->status);
+		sr_dbg("%s error: %d.", libusb_error_name(transfer->status), transfer->status);
 
 	buf = (uint32_t *)transfer->buffer;
 
@@ -255,6 +260,8 @@ void LIBUSB_CALL h4032l_usb_callback(struct libusb_transfer *transfer)
 		 * First Transfer as next.
 		 */
 		status = (struct h4032l_status_packet *)transfer->buffer;
+		sr_dbg("RESP_STATUS:0x%08x 0x%08x 0x%08x", status->magic,
+		       status->values, status->status);
 		if (status->magic != H4032L_STATUS_PACKET_MAGIC)
 			devc->status = H4032L_STATUS_RESPONSE_STATUS;
 		else if (status->status == 2)
@@ -278,6 +285,8 @@ void LIBUSB_CALL h4032l_usb_callback(struct libusb_transfer *transfer)
 		std_session_send_df_header(sdi);
 		break;
 	case H4032L_STATUS_FIRST_TRANSFER:
+		sr_dbg("FIRST_TRANS:0x%08x 0x%08x 0x%08x", buf[0],
+		       buf[1], buf[2]);
 		/* Drop packets until H4032L_START_PACKET_MAGIC. */
 		if (buf[0] != H4032L_START_PACKET_MAGIC) {
 			sr_dbg("Mismatch magic number of start poll.");
@@ -394,6 +403,7 @@ SR_PRIV int h4032l_start_data_transfers(const struct sr_dev_inst *sdi)
 			(void *)sdi, H4032L_USB_TIMEOUT);
 
 		/* Send prepared usb packet. */
+		sr_dbg("submitting transfer: %d", i);
 		if ((ret = libusb_submit_transfer(transfer)) != 0) {
 			sr_err("Failed to submit transfer: %s.",
 			       libusb_error_name(ret));
