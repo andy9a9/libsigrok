@@ -426,6 +426,8 @@ struct sr_input_module {
 	 * Check if this input module can load and parse the specified stream.
 	 *
 	 * @param[in] metadata Metadata the module can use to identify the stream.
+	 * @param[out] confidence "Strength" of the detection.
+	 *   Specialized handlers can take precedence over generic/basic support.
 	 *
 	 * @retval SR_OK This module knows the format.
 	 * @retval SR_ERR_NA There wasn't enough data for this module to
@@ -434,8 +436,15 @@ struct sr_input_module {
 	 *   it. This means the stream is either corrupt, or indicates a
 	 *   feature that the module does not support.
 	 * @retval SR_ERR This module does not know the format.
+	 *
+	 * Lower numeric values of 'confidence' mean that the input module
+	 * stronger believes in its capability to handle this specific format.
+	 * This way, multiple input modules can claim support for a format,
+	 * and the application can pick the best match, or try fallbacks
+	 * in case of errors. This approach also copes with formats that
+	 * are unreliable to detect in the absence of magic signatures.
 	 */
-	int (*format_match) (GHashTable *metadata);
+	int (*format_match) (GHashTable *metadata, unsigned int *confidence);
 
 	/**
 	 * Initialize the input module.
@@ -1241,6 +1250,21 @@ SR_PRIV void sr_fs9721_01_temp_c(struct sr_datafeed_analog *analog, void *info);
 SR_PRIV void sr_fs9721_10_temp_c(struct sr_datafeed_analog *analog, void *info);
 SR_PRIV void sr_fs9721_01_10_temp_f_c(struct sr_datafeed_analog *analog, void *info);
 SR_PRIV void sr_fs9721_max_c_min(struct sr_datafeed_analog *analog, void *info);
+
+/*--- hardware/dmm/ms8250d.c ------------------------------------------------*/
+
+#define MS8250D_PACKET_SIZE 18
+
+struct ms8250d_info {
+	gboolean is_ac, is_dc, is_auto, is_rs232, is_micro, is_nano, is_kilo;
+	gboolean is_diode, is_milli, is_percent, is_mega, is_beep, is_farad;
+	gboolean is_ohm, is_rel, is_hold, is_ampere, is_volt, is_hz, is_bat;
+	gboolean is_ncv, is_min, is_max, is_sign, is_autotimer;
+};
+
+SR_PRIV gboolean sr_ms8250d_packet_valid(const uint8_t *buf);
+SR_PRIV int sr_ms8250d_parse(const uint8_t *buf, float *floatval,
+			     struct sr_datafeed_analog *analog, void *info);
 
 /*--- hardware/dmm/dtm0660.c ------------------------------------------------*/
 

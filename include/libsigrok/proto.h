@@ -170,6 +170,7 @@ SR_API struct sr_input *sr_input_new(const struct sr_input_module *imod,
 		GHashTable *options);
 SR_API int sr_input_scan_buffer(GString *buf, const struct sr_input **in);
 SR_API int sr_input_scan_file(const char *filename, const struct sr_input **in);
+SR_API const struct sr_input_module *sr_input_module_get(const struct sr_input *in);
 SR_API struct sr_dev_inst *sr_input_dev_inst_get(const struct sr_input *in);
 SR_API int sr_input_send(const struct sr_input *in, GString *buf);
 SR_API int sr_input_end(const struct sr_input *in);
@@ -247,6 +248,8 @@ SR_API uint64_t sr_parse_timestring(const char *timestring);
 SR_API gboolean sr_parse_boolstring(const char *boolstring);
 SR_API int sr_parse_period(const char *periodstr, uint64_t *p, uint64_t *q);
 SR_API int sr_parse_voltage(const char *voltstr, uint64_t *p, uint64_t *q);
+SR_API int sr_sprintf_ascii(char *buf, const char *format, ...);
+SR_API int sr_vsprintf_ascii(char *buf, const char *format, va_list args);
 SR_API int sr_snprintf_ascii(char *buf, size_t buf_size,
 		const char *format, ...);
 SR_API int sr_vsnprintf_ascii(char *buf, size_t buf_size,

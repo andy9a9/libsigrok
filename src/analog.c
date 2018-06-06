@@ -174,8 +174,7 @@ SR_PRIV int sr_analog_init(struct sr_datafeed_analog *analog,
 SR_API int sr_analog_to_float(const struct sr_datafeed_analog *analog,
 		float *outbuf)
 {
-	float offset;
-	unsigned int b, i, count;
+	unsigned int b, count;
 	gboolean bigendian;
 
 	if (!analog || !(analog->data) || !(analog->meaning)
@@ -275,7 +274,7 @@ SR_API int sr_analog_to_float(const struct sr_datafeed_analog *analog,
 		/* The data is already in the right format. */
 		memcpy(outbuf, analog->data, count * sizeof(float));
 	} else {
-		for (i = 0; i < count; i += analog->encoding->unitsize) {
+		for (unsigned int i = 0; i < count; i += analog->encoding->unitsize) {
 			for (b = 0; b < analog->encoding->unitsize; b++) {
 				if (analog->encoding->is_bigendian == bigendian)
 					((uint8_t *)outbuf)[i + b] =
@@ -287,7 +286,7 @@ SR_API int sr_analog_to_float(const struct sr_datafeed_analog *analog,
 			if (analog->encoding->scale.p != 1
 					|| analog->encoding->scale.q != 1)
 				outbuf[i] = (outbuf[i] * analog->encoding->scale.p) / analog->encoding->scale.q;
-			offset = ((float)analog->encoding->offset.p / (float)analog->encoding->offset.q);
+			float offset = ((float)analog->encoding->offset.p / (float)analog->encoding->offset.q);
 			outbuf[i] += offset;
 		}
 	}

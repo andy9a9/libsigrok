@@ -74,6 +74,7 @@ libsigrok_la_SOURCES += \
 	src/input/binary.c \
 	src/input/chronovu_la8.c \
 	src/input/csv.c \
+	src/input/logicport.c \
 	src/input/raw_analog.c \
 	src/input/trace32_ad.c \
 	src/input/vcd.c \
@@ -107,7 +108,6 @@ libsigrok_la_SOURCES += \
 libsigrok_la_SOURCES += \
 	src/scpi.h \
 	src/scpi/scpi.c \
-	src/scpi/helpers.c \
 	src/scpi/scpi_tcp.c
 if NEED_RPC
 libsigrok_la_SOURCES += \
@@ -157,7 +157,8 @@ libsigrok_la_SOURCES += \
 	src/dmm/ut71x.c \
 	src/dmm/ut372.c \
 	src/dmm/vc870.c \
-	src/dmm/dtm0660.c
+	src/dmm/dtm0660.c \
+	src/dmm/ms8250d.c
 
 # Hardware (LCR chip parsers)
 if NEED_SERIAL
